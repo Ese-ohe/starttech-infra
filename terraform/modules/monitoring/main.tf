@@ -3,6 +3,16 @@ resource "aws_cloudwatch_log_group" "application" {
   retention_in_days = 14
 }
 
+resource "aws_cloudwatch_log_group" "backend_logs" {
+  name              = "/starttech/backend"
+  retention_in_days = 14
+}
+
+resource "aws_cloudwatch_log_group" "frontend_logs" {
+  name              = "/starttech/frontend"
+  retention_in_days = 14
+}
+
 resource "aws_cloudwatch_metric_alarm" "high_cpu" {
   alarm_name          = "starttech-high-cpu"
   comparison_operator = "GreaterThanThreshold"
@@ -22,16 +32,17 @@ resource "aws_cloudwatch_dashboard" "main" {
   dashboard_body = jsonencode({
     widgets = [
       {
-        type = "metric"
-        x    = 0
-        y    = 0
-        width = 12
+        type   = "metric"
+        x      = 0
+        y      = 0
+        width  = 12
         height = 6
 
         properties = {
           metrics = [
             ["AWS/EC2", "CPUUtilization"]
           ]
+
           period = 300
           stat   = "Average"
           region = "us-east-1"

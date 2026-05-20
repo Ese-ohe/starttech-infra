@@ -25,6 +25,9 @@ module "compute" {
 
 module "storage" {
   source = "./modules/storage"
+
+  vpc_id             = module.networking.vpc_id
+  private_subnet_ids = module.networking.private_subnet_ids
 }
 
 module "monitoring" {
