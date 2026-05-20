@@ -18,7 +18,9 @@ module "networking" {
 }
 
 module "compute" {
-  source = "./modules/compute"
+  source            = "./modules/compute"
+  vpc_id            = module.networking.vpc_id
+  public_subnet_ids = module.networking.public_subnet_ids
 }
 
 module "storage" {
