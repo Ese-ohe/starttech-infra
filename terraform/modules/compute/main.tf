@@ -56,9 +56,11 @@ resource "aws_iam_role" "ec2_role" {
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
+
     Statement = [{
       Action = "sts:AssumeRole"
       Effect = "Allow"
+
       Principal = {
         Service = "ec2.amazonaws.com"
       }
@@ -79,7 +81,7 @@ resource "aws_iam_instance_profile" "ec2_profile" {
 resource "aws_launch_template" "backend" {
   name_prefix   = "starttech-backend"
   image_id      = data.aws_ami.amazon_linux.id
-  instance_type = "t2.micro"
+  instance_type = "t3.micro"
 
   vpc_security_group_ids = [
     aws_security_group.backend_sg.id
@@ -90,12 +92,27 @@ resource "aws_launch_template" "backend" {
   }
 
   user_data = base64encode(<<-EOF
-              #!/bin/bash
-              yum update -y
-              yum install -y docker
-              systemctl start docker
-              systemctl enable docker
-              EOF
+#!/bin/bash
+
+yum update -y
+yum install -y docker
+
+systemctl start docker
+systemctl enable docker
+
+docker pull esecloud/starttech-backend:latest
+
+docker run -d \
+  -p 8080:8080 \
+  -e MONGO_URI="mongodb+srv://eseoheasuelimen_db_user:nGisaYYqr3j4bn4W@cluster0.l2itfg2.mongodb.net/starttech?retryWrites=true&w=majority&appName=Cluster0" \
+  -e DB_NAME="starttech" \
+  -e PORT="8080" \
+  -e JWT_SECRET_KEY="mysecretkey" \
+  --restart always \
+  --name starttech-backend \
+  esecloud/starttech-backend:latest
+
+EOF
   )
 }
 
@@ -154,4 +171,31 @@ resource "aws_autoscaling_group" "backend_asg" {
     value               = "starttech-backend"
     propagate_at_launch = true
   }
+}
+
+resource "aws_autoscaling_policy" "scale_up" {
+  name                   = "starttech-scale-up"
+  autoscaling_group_name = aws_autoscaling_group.backend_asg.name
+  adjustment_type        = "ChangeInCapacity"
+  scaling_adjustment     = 1
+  cooldown               = 300
+}
+
+resource "aws_cloudwatch_metric_alarm" "cpu_high" {
+  alarm_name          = "starttech-high-cpu"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = 120
+  statistic           = "Average"
+  threshold           = 70
+
+  dimensions = {
+    AutoScalingGroupName = aws_autoscaling_group.backend_asg.name
+  }
+
+  alarm_actions = [
+    aws_autoscaling_policy.scale_up.arn
+  ]
 }
