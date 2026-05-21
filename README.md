@@ -255,4 +255,8 @@ Potential future improvements include:
 
 # Author
 
-StartTech Assessment 3 Infrastructure Project
+## Author
+
+**Eseohe Asuelimen**  
+Cloud Engineering Student, AltSchool Africa  
+Assessment 3 – Production-Grade AWS Infrastructure Project
